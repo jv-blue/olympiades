@@ -335,9 +335,10 @@ function renderProgram(){
   let html=`<div class="card"><h2>📅 Programme</h2>
     <div class="hint">Chaque sport est une <b>ligue</b> : toutes les équipes s'affrontent. 1 victoire = ${state.pointsPerWin||1} point (réglable). Les <b>4 sports 2v2 se jouent en parallèle</b> (panneau ⚡).</div>
     <div class="hint">🗺️ <b>Déroulé :</b> ${ordre.map(escapeHtml).join('  →  ')}<br><span class="muted">(modifiable avec ↑ ↓ dans ⚙️ Réglages)</span></div>`;
-  if(!generated) html+=`<div class="spacer"></div><div class="hint">Pour démarrer : ⚙️ <b>Réglages → Zone de danger → Générer les équipes</b>.</div>`;
+  if(!generated) html+=`<div class="spacer"></div><button class="btn primary" id="genFirst">🎲 Générer les équipes & le programme</button><div class="hint">À faire <b>sur le téléphone</b> qui servira à saisir les scores (les données restent sur cet appareil). Ensuite, la régénération est rangée dans ⚙️ Réglages → ⚠️ Zone de danger.</div>`;
   html+=`</div>`;
   elProg.innerHTML=html;
+  const gf=document.getElementById('genFirst'); if(gf) gf.onclick=doGenerate;
 
   if(generated){
     let panelDone=false;

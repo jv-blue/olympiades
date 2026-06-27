@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>🏆 Olympiades</title>
+<!-- Mobile / « Ajouter à l'écran d'accueil » : ouverture plein écran, comme une app -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Olympiades">
+<meta name="theme-color" content="#0f172a">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Crect width='180' height='180' rx='40' fill='%230f172a'/%3E%3Ctext x='50%25' y='52%25' font-size='110' text-anchor='middle' dominant-baseline='central'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Ctext y='52' font-size='52'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#0f172a; --card:#1e293b; --card2:#273449; --line:#334155;
+    --txt:#e2e8f0; --muted:#94a3b8; --accent:#38bdf8; --accent2:#22c55e;
+    --gold:#fbbf24; --silver:#cbd5e1; --bronze:#d97706; --danger:#ef4444;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--txt); -webkit-text-size-adjust:100%}
+  header{position:sticky; top:0; z-index:10; background:rgba(15,23,42,.95); backdrop-filter:blur(8px); border-bottom:1px solid var(--line)}
+  .wrap{max-width:760px; margin:0 auto; padding:0 14px}
+  h1{font-size:20px; margin:12px 0 8px; display:flex; align-items:center; gap:8px}
+  .tabs{display:flex; gap:6px; padding-bottom:8px}
+  .tab{flex:1; padding:9px 8px; text-align:center; border-radius:10px 10px 0 0; background:transparent; color:var(--muted); border:none; font-size:14px; font-weight:600; cursor:pointer}
+  .tab.active{background:var(--card); color:var(--txt)}
+  main{padding:16px 0 60px}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:14px}
+  .card h2{font-size:16px; margin:0 0 10px}
+  label{display:block; font-size:12px; color:var(--muted); margin:10px 0 4px}
+  input[type=text], input[type=number], select{width:100%; padding:10px; border-radius:9px; border:1px solid var(--line); background:var(--card2); color:var(--txt); font-size:15px}
+  textarea{width:100%; min-height:96px; padding:10px; border-radius:9px; border:1px solid var(--line); background:var(--card2); color:var(--txt); font-size:14px; font-family:inherit; line-height:1.5; resize:vertical}
+  .rules-text{white-space:pre-wrap; font-size:14px; line-height:1.65; color:var(--txt)}
+  .danger-zone{border-color:var(--danger); background:rgba(239,68,68,.06)}
+  .danger-zone h2{color:#fca5a5}
+  .size-sel{width:auto; flex:0 0 auto}
+  .players-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  button{font-family:inherit}
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:var(--card2); color:var(--txt); font-size:14px; font-weight:600; cursor:pointer; width:100%}
+  .btn.primary{background:var(--accent); color:#06283d; border-color:var(--accent)}
+  .btn.ghost{background:transparent}
+  .btn.danger{color:var(--danger); border-color:var(--danger)}
+  .btn.sm{padding:7px 10px; font-size:13px; width:auto}
+  .row{display:flex; gap:8px; align-items:center}
+  .muted{color:var(--muted); font-size:13px}
+  .pill{font-size:11px; padding:2px 8px; border-radius:20px; background:var(--card2); color:var(--muted); border:1px solid var(--line)}
+  .pill.done{background:rgba(34,197,94,.15); color:#86efac; border-color:transparent}
+  .pill.live{background:rgba(56,189,248,.15); color:#7dd3fc; border-color:transparent}
+  .game-head{display:flex; align-items:center; justify-content:space-between; cursor:pointer; gap:10px}
+  .game-title{display:flex; align-items:center; gap:10px; font-weight:700; font-size:16px}
+  .tour-label{font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin:14px 0 2px}
+  .bm{background:var(--card2); border:1px solid var(--line); border-radius:11px; padding:10px; margin-top:8px}
+  .bm.cur{border-color:var(--accent)}
+  .bm-label{font-size:11px; color:var(--muted); margin-bottom:7px; display:flex; justify-content:space-between; gap:8px}
+  .match-teams{display:flex; align-items:stretch; gap:8px}
+  .team-btn{flex:1; padding:10px; border-radius:9px; border:1px solid var(--line); background:var(--card); color:var(--txt); cursor:pointer; text-align:center; font-size:14px; line-height:1.35; transition:.12s}
+  .team-btn .names{font-weight:600}
+  .team-btn.win{background:rgba(34,197,94,.18); border-color:var(--accent2); color:#bbf7d0}
+  .vs{display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:12px; min-width:24px}
+  .creline{display:flex; justify-content:space-between; gap:8px; padding:6px 2px; font-size:13px; color:var(--muted); border-bottom:1px solid var(--line)}
+  table{width:100%; border-collapse:collapse}
+  th,td{padding:9px 8px; text-align:left; border-bottom:1px solid var(--line); font-size:14px}
+  th{color:var(--muted); font-size:12px; font-weight:600}
+  td.num,th.num{text-align:center; width:54px}
+  .rank{font-weight:700; width:42px; text-align:center}
+  .medal{font-size:18px}
+  tr.top1 td{background:rgba(251,191,36,.08)}
+  .total-pts{font-weight:700; color:var(--accent)}
+  .hidden{display:none}
+  .stack>*{margin-top:10px}
+  .spacer{height:6px}
+  .hint{font-size:12px; color:var(--muted); margin-top:6px; line-height:1.5}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>🏆 Olympiades du weekend</h1>
+    <div class="tabs">
+      <button class="tab active" data-tab="program">📅 Programme</button>
+      <button class="tab" data-tab="ranking">📊 Classement</button>
+      <button class="tab" data-tab="rules">📖 Règles</button>
+      <button class="tab" data-tab="config">⚙️ Réglages</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="tab-program"></section>
+  <section id="tab-ranking" class="hidden"></section>
+  <section id="tab-rules" class="hidden"></section>
+
+  <section id="tab-config" class="hidden">
+    <div class="card">
+      <h2>👥 Joueurs <span class="muted" id="playerCount"></span></h2>
+      <div class="players-grid" id="playersGrid"></div>
+      <div class="hint">Le classement final est <b>individuel</b> : les équipes sont retirées au sort à chaque sport (en évitant de reformer les mêmes binômes).</div>
+    </div>
+
+    <div class="card">
+      <h2>🔢 Points</h2>
+      <label>Points par victoire</label>
+      <input type="number" id="ppw" min="1">
+      <div class="hint">Chaque match est un championnat (ligue) : <b>toutes les équipes s'affrontent</b>. Chaque match gagné rapporte ces points à <b>chaque joueur</b> de l'équipe ; défaite = 0. Le classement individuel = total des points.</div>
+    </div>
+
+    <div class="card">
+      <h2>🎲 Sports <span class="muted" id="gameCount"></span></h2>
+      <div id="gamesEditor" class="stack"></div>
+      <div class="spacer"></div>
+      <button class="btn ghost sm" id="addGame">➕ Ajouter un sport</button>
+      <div class="hint">Taille d'équipe → nombre d'équipes (12 ÷ taille) → nb de matchs de la ligue. 2v2 → 6 équipes = 15 matchs ; 3v3 → 4 équipes = 6 matchs ; 6v6 → 2 équipes = 1 match.</div>
+    </div>
+
+    <div class="card">
+      <h2>💾 Données</h2>
+      <div class="stack">
+        <button class="btn ghost" id="exportBtn">⬇️ Exporter (sauvegarde)</button>
+        <button class="btn ghost" id="importBtn">⬆️ Importer une sauvegarde</button>
+        <input type="file" id="importFile" accept="application/json" class="hidden">
+      </div>
+      <div class="hint">Sauvegarde automatique dans ce navigateur.</div>
+    </div>
+
+    <div class="card danger-zone">
+      <h2>⚠️ Zone de danger</h2>
+      <div class="hint">À faire <b>avant de commencer</b>. Ces actions <b>effacent les résultats déjà saisis</b> — à ne pas toucher pendant les jeux.</div>
+      <div class="spacer"></div>
+      <div class="stack">
+        <button class="btn primary" id="genAll2">🎲 Générer / Regénérer toutes les équipes</button>
+        <button class="btn danger" id="resetAll">⚠️ Tout réinitialiser</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ===================== État & persistance ===================== */
+const LS_KEY = 'olympiades_v4';
+const DEFAULT_PLAYERS = ["Matis","Raph","Camille","Tanja","Pierre","Margot","Antoine","Alexis","Sarah","Theo","Remi","Thomas"];
+const DEFAULT_RULES = {
+  "Pétanque": "⏱️ Partie courte : première équipe à 4 points (au lieu de 13).\nÀ chaque mène, l'équipe qui a la boule la plus proche du cochonnet marque 1 point par boule mieux placée que la meilleure boule adverse.",
+  "Ping Pong": "⏱️ Set unique : première équipe à 6 points (au lieu de 11).\nService alterné tous les 2 points.",
+  "Foot": "⏱️ Premier à 5 buts gagne (format 6 vs 6). Pas de durée fixe.",
+  "Volley": "Set unique en 21 points (format 6 vs 6, règles classiques).",
+  "Volley piscine": "💦 Format 3 vs 3 dans la piscine.\nManche en 12 points au total ; on change de côté après le 6e point.\n🚫 Interdit de toucher le plafond = point pour l'adversaire.",
+  "Badminton": "⏱️ Set unique : première équipe à 6 points (au lieu de 21).",
+  "Tir à l'arc": "🎯 3 flèches par joueur (soit 6 flèches par équipe en 2v2).\nOn additionne les points de toutes les flèches de l'équipe : le meilleur total gagne le match.",
+};
+const DEFAULT_GAMES = [
+  {name:"Foot", size:6},
+  {name:"Pétanque", size:2},
+  {name:"Ping Pong", size:2},
+  {name:"Badminton", size:2},
+  {name:"Tir à l'arc", size:2},
+  {name:"Volley", size:6},
+  {name:"Volley piscine", size:3},
+];
+function defaultState(){
+  return {
+    players: DEFAULT_PLAYERS.slice(),
+    pointsPerWin: 1,
+    terrains: 3,
+    games: DEFAULT_GAMES.map(g=>({name:g.name, size:g.size, rules:DEFAULT_RULES[g.name]||'', teams:null, matches:null})),
+    schedule: null
+  };
+}
+let state = load();
+const uiCollapsed = {};
+
+function load(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(raw){
+      const st=Object.assign(defaultState(), JSON.parse(raw));
+      st.games.forEach(g=>{ if(g.rules===undefined) g.rules=DEFAULT_RULES[g.name]||''; }); // règles par défaut si absentes
+      return st;
+    }
+  }catch(e){}
+  return defaultState();
+}
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+
+/* ===================== Génération des équipes ===================== */
+function partnerCounts(excludeIdx){
+  const n=state.players.length;
+  const c=Array.from({length:n},()=>new Array(n).fill(0));
+  state.games.forEach((g,gi)=>{
+    if(gi===excludeIdx || !g.teams) return;
+    g.teams.forEach(team=>{ for(let x=0;x<team.length;x++)for(let y=x+1;y<team.length;y++){ c[team[x]][team[y]]++; c[team[y]][team[x]]++; } });
+  });
+  return c;
+}
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function makeTeams(gi){
+  const ids=state.players.map((_,i)=>i);
+  const size=state.games[gi].size||2;
+  if(ids.length % size !== 0) return null;
+  const pc=partnerCounts(gi);
+  let best=null,bestCost=Infinity;
+  for(let attempt=0;attempt<400;attempt++){
+    const pool=shuffle(ids); const teams=[]; let cost=0;
+    while(pool.length){
+      const team=[pool.shift()];
+      while(team.length<size){
+        let bi=0,bv=Infinity;
+        for(let k=0;k<pool.length;k++){ let v=0; team.forEach(t=>v+=pc[t][pool[k]]); v+=Math.random()*0.3; if(v<bv){bv=v;bi=k;} }
+        team.push(pool.splice(bi,1)[0]);
+      }
+      for(let x=0;x<team.length;x++)for(let y=x+1;y<team.length;y++) cost+=pc[team[x]][team[y]];
+      teams.push(team);
+    }
+    if(cost<bestCost){ bestCost=cost; best=teams; if(cost===0) break; }
+  }
+  return best;
+}
+
+/* ===================== Ligue (round-robin) ===================== */
+// Méthode du cercle : chaque équipe affronte toutes les autres, regroupé en journées
+function roundRobin(N){
+  const arr=Array.from({length:N},(_,i)=>i); if(N%2===1) arr.push(-1);
+  const n=arr.length, rounds=n-1, half=n/2; let order=arr.slice(); const matches=[];
+  for(let r=0;r<rounds;r++){
+    for(let i=0;i<half;i++){ const a=order[i], b=order[n-1-i]; if(a!==-1 && b!==-1) matches.push({a,b,winner:null,round:r}); }
+    order=[order[0], order[n-1], ...order.slice(1,n-1)];
+  }
+  return matches;
+}
+function isParallel(g){ return (g.size||2)===2; }   // les sports 2v2 se jouent en parallèle
+
+function generateAll(){
+  state.games.forEach((g,gi)=>{
+    const teams=makeTeams(gi);
+    g.teams=teams;
+    g.matches = teams ? roundRobin(teams.length) : null;
+  });
+  build2v2Schedule();
+  for(const k in uiCollapsed) delete uiCollapsed[k];
+  save();
+}
+function doGenerate(){
+  const hasResults=state.games.some(g=>g.matches && g.matches.some(m=>m.winner!==null));
+  if(hasResults && !confirm("Regénérer va refaire TOUTES les équipes et EFFACER tous les résultats déjà saisis. Continuer ?")) return;
+  generateAll(); renderAll();
+}
+function regenGame(gi){
+  const teams=makeTeams(gi);
+  if(!teams){ alert("Le nombre de joueurs ("+state.players.length+") n'est pas divisible par la taille d'équipe."); return; }
+  state.games[gi].teams=teams;
+  state.games[gi].matches=roundRobin(teams.length);
+  build2v2Schedule();
+  delete uiCollapsed[gi];
+  save(); renderProgram(); renderRanking();
+}
+function setWinner(gi,mid,res){
+  const m=state.games[gi].matches[mid];
+  m.winner = (m.winner===res)?null:res;
+  save(); renderProgram(); renderRanking();
+}
+function moveGame(gi,dir){
+  const nj=gi+dir; if(nj<0 || nj>=state.games.length) return;
+  [state.games[gi], state.games[nj]] = [state.games[nj], state.games[gi]];
+  if(state.schedule) build2v2Schedule();          // les index changent → on reconstruit le programme
+  for(const k in uiCollapsed) delete uiCollapsed[k];
+  save(); renderConfig(); renderProgram();
+}
+
+/* ===================== Programme parallèle des sports 2v2 ===================== */
+// Planifie tous les matchs 2v2 en créneaux : 1 match par sport (un espace par sport),
+// joueurs disjoints, jusqu'à `terrains` matchs en même temps. On équilibre les sports.
+function build2v2Schedule(){
+  const terrains=state.terrains||3;
+  const parIdx=state.games.map((g,gi)=>gi).filter(gi=>isParallel(state.games[gi]) && state.games[gi].matches);
+  if(!parIdx.length){ state.schedule=[]; return; }
+  const allItems=[];
+  parIdx.forEach(gi=>{ const g=state.games[gi]; g.matches.forEach((m,mid)=>allItems.push({gi,mid,players:g.teams[m.a].concat(g.teams[m.b])})); });
+  function buildOnce(order){
+    const bySport={}; parIdx.forEach(gi=>bySport[gi]=[]);
+    order.forEach(it=>bySport[it.gi].push(it));
+    const sched=[]; let total=order.length, sf=0;
+    while(total>0 && sf++<3000){
+      const used=new Set(), usedSports=new Set(), cre=[];
+      while(cre.length<terrains){
+        const cand=parIdx.filter(gi=>!usedSports.has(gi) && bySport[gi].length>0).sort((a,b)=>bySport[b].length-bySport[a].length);
+        let added=false;
+        for(const gi of cand){
+          let bi=-1;
+          for(let k=0;k<bySport[gi].length;k++){ if(!bySport[gi][k].players.some(p=>used.has(p))){ bi=k; break; } }
+          if(bi>=0){ const it=bySport[gi].splice(bi,1)[0]; it.players.forEach(p=>used.add(p)); usedSports.add(gi); cre.push({gi:it.gi,mid:it.mid}); total--; added=true; break; }
+        }
+        if(!added) break;
+      }
+      if(!cre.length) break;
+      sched.push(cre);
+    }
+    return sched;
+  }
+  let best=null;
+  for(let r=0;r<80;r++){ const sc=buildOnce(shuffle(allItems)); if(!best || sc.length<best.length) best=sc; }
+  state.schedule=best;
+}
+
+/* ===================== Classements ===================== */
+function standings(g){
+  const rows=g.teams.map((t,ti)=>({ti, played:0, wins:0}));
+  g.matches.forEach(m=>{ if(m.winner===null) return; rows[m.a].played++; rows[m.b].played++; (m.winner==='a'?rows[m.a]:rows[m.b]).wins++; });
+  rows.sort((x,y)=> y.wins-x.wins || x.ti-y.ti);
+  return rows;
+}
+function isComplete(g){ return g.matches && g.matches.every(m=>m.winner!==null); }
+function computeRanking(){
+  const ppw=state.pointsPerWin||1;
+  const rows=state.players.map((name,i)=>({i,name,wins:0,pts:0}));
+  state.games.forEach(g=>{
+    if(!g.matches) return;
+    g.matches.forEach(m=>{ if(m.winner===null) return; const win=(m.winner==='a'?g.teams[m.a]:g.teams[m.b]); win.forEach(p=>{ rows[p].wins++; rows[p].pts+=ppw; }); });
+  });
+  rows.sort((a,b)=> b.pts-a.pts || a.name.localeCompare(b.name));
+  return rows;
+}
+
+/* ===================== Rendu : Programme ===================== */
+const elProg=document.getElementById('tab-program');
+function nm(i){ return state.players[i] || ('Joueur '+(i+1)); }
+function teamNames(team){ return team.map(i=>escapeHtml(nm(i))).join(' · '); }
+
+function renderProgram(){
+  const generated = state.games.some(g=>g.matches);
+  // déroulé prévu (ordre des sports, avec le bloc 2v2 regroupé)
+  const ordre=[]; let a2=false;
+  state.games.forEach(g=>{ if(isParallel(g)){ if(!a2){ordre.push('Sports 2v2'); a2=true;} } else ordre.push(g.name); });
+
+  let html=`<div class="card"><h2>📅 Programme</h2>
+    <div class="hint">Chaque sport est une <b>ligue</b> : toutes les équipes s'affrontent. 1 victoire = ${state.pointsPerWin||1} point (réglable). Les <b>4 sports 2v2 se jouent en parallèle</b> (panneau ⚡).</div>
+    <div class="hint">🗺️ <b>Déroulé :</b> ${ordre.map(escapeHtml).join('  →  ')}<br><span class="muted">(modifiable avec ↑ ↓ dans ⚙️ Réglages)</span></div>`;
+  if(!generated) html+=`<div class="spacer"></div><div class="hint">Pour démarrer : ⚙️ <b>Réglages → Zone de danger → Générer les équipes</b>.</div>`;
+  html+=`</div>`;
+  elProg.innerHTML=html;
+
+  if(generated){
+    let panelDone=false;
+    state.games.forEach((g,gi)=>{
+      if(!g.matches) return;
+      if(isParallel(g) && !panelDone){ const panel=renderParallelPanel(); if(panel) elProg.appendChild(panel); panelDone=true; }
+      elProg.appendChild(renderLeague(gi));   // carte de la ligue (les 2v2 sont repliés par défaut)
+    });
+  }
+}
+
+function renderParallelPanel(){
+  const parIdx=state.games.map((g,gi)=>gi).filter(gi=>state.games[gi].matches && isParallel(state.games[gi]));
+  if(!parIdx.length || !state.schedule) return null;
+  const card=document.createElement('div'); card.className='card';
+
+  const head=document.createElement('div'); head.className='row'; head.style.justifyContent='space-between';
+  head.innerHTML=`<h2 style="margin:0">⚡ Sports 2v2 en parallèle</h2>`;
+  const tsel=document.createElement('select'); tsel.className='size-sel';
+  [1,2,3].forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n+' terrain'+(n>1?'s':''); if((state.terrains||3)===n)o.selected=true; tsel.appendChild(o); });
+  tsel.onchange=()=>{ state.terrains=parseInt(tsel.value,10); build2v2Schedule(); save(); renderProgram(); };
+  head.appendChild(tsel); card.appendChild(head);
+
+  const totM=state.schedule.reduce((s,c)=>s+c.length,0);
+  const doneM=state.schedule.reduce((s,c)=>s+c.filter(({gi,mid})=>state.games[gi].matches[mid].winner!==null).length,0);
+  const hint=document.createElement('div'); hint.className='hint';
+  hint.innerHTML=`Lance chaque créneau <b>en même temps</b> sur tes terrains (un sport par terrain, personne sur deux terrains à la fois). Saisis les vainqueurs au fur et à mesure. <b>${doneM}/${totM} matchs joués · ${state.schedule.length} créneaux.</b> Avec 12 joueurs, 2 sports tournent en parallèle (parfois 3).`;
+  card.appendChild(hint);
+
+  let currentShown=false;
+  state.schedule.forEach((cre,ci)=>{
+    const done=cre.every(({gi,mid})=>state.games[gi].matches[mid].winner!==null);
+    if(done){
+      const line=document.createElement('div'); line.className='creline';
+      line.innerHTML=`<span>✓ Créneau ${ci+1}</span><span>${cre.map(({gi})=>escapeHtml(state.games[gi].name)).join(' · ')}</span>`;
+      card.appendChild(line);
+    } else {
+      const isCurrent=!currentShown; currentShown=true;
+      const used=new Set();
+      const lab=document.createElement('div'); lab.className='tour-label';
+      lab.innerHTML=`Créneau ${ci+1} ${isCurrent?'<span class="pill live">à jouer maintenant</span>':''}`;
+      card.appendChild(lab);
+      cre.forEach(({gi,mid})=>{ state.games[gi].teams[state.games[gi].matches[mid].a].forEach(p=>used.add(p)); state.games[gi].teams[state.games[gi].matches[mid].b].forEach(p=>used.add(p)); card.appendChild(renderMatchRow(gi,mid,escapeHtml(state.games[gi].name), isCurrent)); });
+      const idle=state.players.map((_,i)=>i).filter(i=>!used.has(i));
+      if(idle.length){ const d=document.createElement('div'); d.className='hint'; d.textContent='😴 Au repos : '+idle.map(nm).join(', '); card.appendChild(d); }
+    }
+  });
+  return card;
+}
+
+function renderMatchRow(gi,mid,labelText,current){
+  const g=state.games[gi], m=g.matches[mid];
+  const wrap=document.createElement('div'); wrap.className='bm'+(current?' cur':'');
+  const done=m.winner!==null;
+  wrap.innerHTML=`<div class="bm-label"><span>${labelText}</span><span>${done?'✓':'vainqueur ?'}</span></div>`;
+  const mt=document.createElement('div'); mt.className='match-teams';
+  const tA=document.createElement('button'); tA.className='team-btn'+(m.winner==='a'?' win':''); tA.innerHTML=`<div class="names">${teamNames(g.teams[m.a])}</div>`; tA.onclick=()=>setWinner(gi,mid,'a');
+  const vs=document.createElement('div'); vs.className='vs'; vs.textContent='VS';
+  const tB=document.createElement('button'); tB.className='team-btn'+(m.winner==='b'?' win':''); tB.innerHTML=`<div class="names">${teamNames(g.teams[m.b])}</div>`; tB.onclick=()=>setWinner(gi,mid,'b');
+  mt.appendChild(tA); mt.appendChild(vs); mt.appendChild(tB); wrap.appendChild(mt);
+  return wrap;
+}
+
+function renderLeague(gi){
+  const g=state.games[gi];
+  const N=g.teams.length;
+  const complete=isComplete(g);
+  const played=g.matches.filter(m=>m.winner!==null).length;
+  if(uiCollapsed[gi]===undefined) uiCollapsed[gi]= isParallel(g); // 2v2 repliés (le panneau ⚡ pilote)
+  const collapsed=uiCollapsed[gi];
+
+  const card=document.createElement('div'); card.className='card';
+  const head=document.createElement('div'); head.className='game-head';
+  let badge;
+  if(complete){ const champ=g.teams[standings(g)[0].ti]; badge=`<span class="pill done">🏆 ${teamNames(champ)}</span>`; }
+  else if(played>0){ badge=`<span class="pill live">${played}/${g.matches.length}</span>`; }
+  else { badge=`<span class="pill">${N} équipes · ${g.matches.length} matchs</span>`; }
+  head.innerHTML=`<div class="game-title"><span>${escapeHtml(g.name)} <span class="muted" style="font-weight:400;font-size:13px">${g.size}v${g.size}</span></span></div>${badge}`;
+  head.onclick=()=>{ uiCollapsed[gi]=!collapsed; renderProgram(); };
+  card.appendChild(head);
+
+  if(!collapsed){
+    // classement de la ligue
+    const medals=['🥇','🥈','🥉'];
+    const st=standings(g);
+    const tbl=document.createElement('div');
+    tbl.innerHTML=`<div class="tour-label">Classement de la ligue</div>
+      <table><thead><tr><th class="rank">#</th><th>Équipe</th><th class="num">J</th><th class="num">V</th></tr></thead>
+      <tbody>${st.map((r,idx)=>`<tr class="${idx===0&&r.wins>0?'top1':''}">
+        <td class="rank">${idx<3&&complete?`<span class="medal">${medals[idx]}</span>`:(idx+1)}</td>
+        <td>${teamNames(g.teams[r.ti])}</td><td class="num">${r.played}</td><td class="num total-pts">${r.wins}</td></tr>`).join('')}</tbody></table>`;
+    card.appendChild(tbl);
+
+    // matchs (saisie) — pour 2v2 c'est surtout via le panneau ⚡, mais éditable ici aussi
+    if(isParallel(g)){
+      const note=document.createElement('div'); note.className='hint'; note.textContent='Les matchs de ce sport se jouent via le panneau ⚡ en haut (saisie possible ici aussi).';
+      card.appendChild(note);
+    }
+    const rounds={};
+    g.matches.forEach((m,mid)=>{ (rounds[m.round]=rounds[m.round]||[]).push(mid); });
+    Object.keys(rounds).map(Number).sort((a,b)=>a-b).forEach(r=>{
+      const lab=document.createElement('div'); lab.className='tour-label'; lab.textContent='Journée '+(r+1);
+      card.appendChild(lab);
+      rounds[r].forEach(mid=>card.appendChild(renderMatchRow(gi,mid,'Match',false)));
+    });
+
+    const re=document.createElement('button'); re.className='btn ghost sm'; re.style.marginTop='12px';
+    re.textContent='🔄 Regénérer ce sport';
+    re.onclick=()=>{ if((played===0)||confirm('Refaire les équipes de '+g.name+' et effacer ses résultats ?')) regenGame(gi); };
+    card.appendChild(re);
+  }
+  return card;
+}
+
+/* ===================== Rendu : Classement ===================== */
+const elRank=document.getElementById('tab-ranking');
+function renderRanking(){
+  const rows=computeRanking();
+  const totalGames=state.games.filter(g=>g.matches).length;
+  const doneGames=state.games.filter(g=>isComplete(g)).length;
+  const medals=['🥇','🥈','🥉'];
+  elRank.innerHTML=`<div class="card"><h2>📊 Classement individuel</h2>
+    <div class="muted">${doneGames}/${totalGames} ligue(s) terminée(s)</div><div class="spacer"></div>
+    <table><thead><tr><th class="rank">#</th><th>Joueur</th><th class="num">Pts</th><th class="num">V</th></tr></thead>
+    <tbody>${rows.map((r,idx)=>`<tr class="${idx===0&&r.pts>0?'top1':''}">
+      <td class="rank">${idx<3&&r.pts>0?`<span class="medal">${medals[idx]}</span>`:(idx+1)}</td>
+      <td>${escapeHtml(r.name)}</td><td class="num total-pts">${r.pts}</td><td class="num">${r.wins}</td></tr>`).join('')}</tbody></table>
+    <div class="hint">Pts = total des points de victoire sur tous les sports. V = nombre de matchs gagnés.</div></div>`;
+}
+
+/* ===================== Rendu : Règles ===================== */
+let rulesEdit=false;
+function renderRules(){
+  const el=document.getElementById('tab-rules');
+  el.innerHTML=`<div class="card"><h2>📖 Règles des jeux</h2>
+    <div class="hint">Esprit : on joue <b>court</b> pour enchaîner les matchs. Système de <b>ligue</b> (chaque équipe affronte toutes les autres) — chaque match gagné = ${state.pointsPerWin||1} point au classement.</div>
+    <div class="spacer"></div>
+    <button class="btn ghost sm" id="toggleRules">${rulesEdit?'✅ Terminer la modification':'✏️ Modifier les règles'}</button></div>`;
+  document.getElementById('toggleRules').onclick=()=>{ rulesEdit=!rulesEdit; renderRules(); };
+  state.games.forEach((g)=>{
+    const card=document.createElement('div'); card.className='card';
+    card.innerHTML=`<div class="game-title" style="margin-bottom:10px"><span>${escapeHtml(g.name)} <span class="pill">${g.size}v${g.size}</span></span></div>`;
+    if(rulesEdit){
+      const ta=document.createElement('textarea'); ta.value=g.rules||''; ta.placeholder='Règles du jeu…';
+      ta.oninput=()=>{ g.rules=ta.value; save(); };
+      card.appendChild(ta);
+    } else {
+      const d=document.createElement('div'); d.className='rules-text'; d.textContent=g.rules||'(Pas encore de règles — clique sur « Modifier les règles ».)';
+      card.appendChild(d);
+    }
+    el.appendChild(card);
+  });
+}
+
+/* ===================== Rendu : Réglages ===================== */
+function renderConfig(){
+  document.getElementById('playerCount').textContent='('+state.players.length+')';
+  document.getElementById('gameCount').textContent='('+state.games.length+')';
+  const grid=document.getElementById('playersGrid'); grid.innerHTML='';
+  state.players.forEach((p,i)=>{
+    const inp=document.createElement('input'); inp.type='text'; inp.value=p; inp.placeholder='Joueur '+(i+1);
+    inp.oninput=()=>{ state.players[i]=inp.value; save(); renderProgram(); };
+    grid.appendChild(inp);
+  });
+  document.getElementById('ppw').value=state.pointsPerWin;
+
+  const ed=document.getElementById('gamesEditor'); ed.innerHTML='';
+  state.games.forEach((g,gi)=>{
+    const row=document.createElement('div'); row.className='row';
+    const inp=document.createElement('input'); inp.type='text'; inp.value=g.name; inp.style.flex='1'; inp.style.minWidth='0';
+    inp.oninput=()=>{ g.name=inp.value; save(); };
+    const sel=document.createElement('select'); sel.className='size-sel';
+    [1,2,3,6].forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s+'v'+s; if((g.size||2)===s)o.selected=true; sel.appendChild(o); });
+    sel.onchange=()=>{ g.size=parseInt(sel.value,10); g.teams=null; g.matches=null; state.schedule=null; save(); renderConfig(); renderProgram(); };
+    const up=document.createElement('button'); up.className='btn ghost sm'; up.textContent='↑'; up.disabled=gi===0; up.onclick=()=>moveGame(gi,-1);
+    const dn=document.createElement('button'); dn.className='btn ghost sm'; dn.textContent='↓'; dn.disabled=gi===state.games.length-1; dn.onclick=()=>moveGame(gi,1);
+    const del=document.createElement('button'); del.className='btn danger sm'; del.textContent='✕';
+    del.onclick=()=>{ if(!confirm('Supprimer "'+g.name+'" ?')) return; state.games.splice(gi,1); state.schedule=null; save(); renderConfig(); renderProgram(); };
+    row.appendChild(inp); row.appendChild(sel); row.appendChild(up); row.appendChild(dn); row.appendChild(del); ed.appendChild(row);
+  });
+}
+
+/* ===================== Réglages : événements ===================== */
+document.getElementById('ppw').addEventListener('input',e=>{ state.pointsPerWin=Math.max(1,parseInt(e.target.value||'1',10)); save(); renderProgram(); renderRanking(); });
+document.getElementById('genAll2').onclick=doGenerate;
+document.getElementById('addGame').onclick=()=>{ state.games.push({name:'Nouveau sport', size:2, rules:'', teams:null, matches:null}); state.schedule=null; save(); renderConfig(); renderProgram(); };
+document.getElementById('resetAll').onclick=()=>{ if(!confirm('Tout réinitialiser (joueurs, sports, résultats) ?')) return; state=defaultState(); save(); renderAll(); };
+document.getElementById('exportBtn').onclick=()=>{ const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='olympiades-sauvegarde.json'; a.click(); };
+document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
+document.getElementById('importFile').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ state=Object.assign(defaultState(),JSON.parse(r.result)); save(); renderAll(); alert('Sauvegarde importée 🎉'); }catch(err){ alert('Fichier invalide'); } }; r.readAsText(f); };
+
+/* ===================== Onglets ===================== */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    ['program','ranking','rules','config'].forEach(name=>document.getElementById('tab-'+name).classList.toggle('hidden', name!==t.dataset.tab));
+    if(t.dataset.tab==='ranking') renderRanking();
+    if(t.dataset.tab==='rules') renderRules();
+    if(t.dataset.tab==='config') renderConfig();
+  };
+});
+
+/* ===================== Utils & init ===================== */
+function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function renderAll(){ renderProgram(); renderRanking(); renderRules(); renderConfig(); }
+renderAll();
+</script>
+</body>
+</html>

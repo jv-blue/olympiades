@@ -108,6 +108,16 @@
     </div>
 
     <div class="card">
+      <h2>⏱️ Format des ligues (durée)</h2>
+      <label>Matchs par équipe (par sport)</label>
+      <div class="row">
+        <input type="number" id="mpe" min="1" style="flex:1;min-width:0">
+        <button class="btn primary sm" id="mpeApply" style="flex:0 0 auto">Appliquer</button>
+      </div>
+      <div class="hint" id="mpeHint"></div>
+    </div>
+
+    <div class="card">
       <h2>🎲 Sports <span class="muted" id="gameCount"></span></h2>
       <div id="gamesEditor" class="stack"></div>
       <div class="spacer"></div>
@@ -164,6 +174,7 @@ function defaultState(){
     players: DEFAULT_PLAYERS.slice(),
     pointsPerWin: 1,
     terrains: 3,
+    matchsParEquipe: 3,   // nb de matchs joués par équipe dans chaque ligue (cap les "journées")
     games: DEFAULT_GAMES.map(g=>({name:g.name, size:g.size, rules:DEFAULT_RULES[g.name]||'', teams:null, matches:null})),
     schedule: null
   };
@@ -231,12 +242,40 @@ function roundRobin(N){
   return matches;
 }
 function isParallel(g){ return (g.size||2)===2; }   // les sports 2v2 se jouent en parallèle
+// Round-robin limité à K matchs par équipe (K premières journées). K=0/null => complet.
+function leagueMatches(N, k){
+  const all=roundRobin(N), maxR=N-1;
+  const K=(k!=null?k:(state.matchsParEquipe||0));
+  const use=(K>0 && K<maxR)?K:maxR;
+  return all.filter(m=>m.round<use);
+}
+// Change le nb de matchs/équipe sans re-tirer les équipes ni perdre les résultats déjà saisis
+function setMatchsParEquipe(k){
+  k=Math.max(1,k|0);
+  let lost=0;
+  state.games.forEach(g=>{
+    if(!g.teams||!g.matches) return;
+    const keys=new Set(leagueMatches(g.teams.length,k).map(m=>m.a+'-'+m.b));
+    g.matches.forEach(o=>{ if(o.winner!==null && !keys.has(o.a+'-'+o.b)) lost++; });
+  });
+  if(lost && !confirm(lost+" match(s) déjà joué(s) seraient retirés. Continuer ?")) return;
+  state.matchsParEquipe=k;
+  state.games.forEach(g=>{
+    if(!g.teams) return;
+    const old=g.matches||[];
+    const fresh=leagueMatches(g.teams.length,k);
+    fresh.forEach(m=>{ const prev=old.find(o=>o.a===m.a && o.b===m.b); if(prev) m.winner=prev.winner; });  // garde les vainqueurs
+    g.matches=fresh;
+  });
+  build2v2Schedule();
+  save(); renderAll();
+}
 
 function generateAll(){
   state.games.forEach((g,gi)=>{
     const teams=makeTeams(gi);
     g.teams=teams;
-    g.matches = teams ? roundRobin(teams.length) : null;
+    g.matches = teams ? leagueMatches(teams.length) : null;
   });
   build2v2Schedule();
   for(const k in uiCollapsed) delete uiCollapsed[k];
@@ -251,7 +290,7 @@ function regenGame(gi){
   const teams=makeTeams(gi);
   if(!teams){ alert("Le nombre de joueurs ("+state.players.length+") n'est pas divisible par la taille d'équipe."); return; }
   state.games[gi].teams=teams;
-  state.games[gi].matches=roundRobin(teams.length);
+  state.games[gi].matches=leagueMatches(teams.length);
   build2v2Schedule();
   delete uiCollapsed[gi];
   save(); renderProgram(); renderRanking();
@@ -294,29 +333,31 @@ function build2v2Schedule(){
   if(!parIdx.length){ state.schedule=[]; return; }
   const allItems=[];
   parIdx.forEach(gi=>{ const g=state.games[gi]; g.matches.forEach((m,mid)=>allItems.push({gi,mid,players:g.teams[m.a].concat(g.teams[m.b])})); });
+  // Pour chaque créneau, on cherche le PLUS GRAND ensemble de matchs jouables :
+  // sports distincts (1 terrain par sport) + joueurs disjoints, jusqu'à `terrains`.
   function buildOnce(order){
-    const bySport={}; parIdx.forEach(gi=>bySport[gi]=[]);
-    order.forEach(it=>bySport[it.gi].push(it));
-    const sched=[]; let total=order.length, sf=0;
-    while(total>0 && sf++<3000){
-      const used=new Set(), usedSports=new Set(), cre=[];
-      while(cre.length<terrains){
-        const cand=parIdx.filter(gi=>!usedSports.has(gi) && bySport[gi].length>0).sort((a,b)=>bySport[b].length-bySport[a].length);
-        let added=false;
-        for(const gi of cand){
-          let bi=-1;
-          for(let k=0;k<bySport[gi].length;k++){ if(!bySport[gi][k].players.some(p=>used.has(p))){ bi=k; break; } }
-          if(bi>=0){ const it=bySport[gi].splice(bi,1)[0]; it.players.forEach(p=>used.add(p)); usedSports.add(gi); cre.push({gi:it.gi,mid:it.mid}); total--; added=true; break; }
+    let pool=order.slice(); const sched=[]; let sf=0;
+    while(pool.length && sf++<5000){
+      let best=[]; const arr=pool;
+      (function rec(i,ch,uP,uS){
+        if(ch.length>best.length) best=ch.slice();
+        if(best.length>=terrains) return;
+        if(ch.length>=terrains) return;
+        for(let k=i;k<arr.length;k++){ const it=arr[k];
+          if(uS.has(it.gi) || it.players.some(p=>uP.has(p))) continue;
+          it.players.forEach(p=>uP.add(p)); uS.add(it.gi); ch.push(k);
+          rec(k+1,ch,uP,uS);
+          ch.pop(); uS.delete(it.gi); it.players.forEach(p=>uP.delete(p));
         }
-        if(!added) break;
-      }
-      if(!cre.length) break;
-      sched.push(cre);
+      })(0,[],new Set(),new Set());
+      const cs=new Set(best);
+      sched.push(best.map(k=>({gi:arr[k].gi, mid:arr[k].mid})));
+      pool=pool.filter((_,k)=>!cs.has(k));
     }
     return sched;
   }
   let best=null;
-  for(let r=0;r<80;r++){ const sc=buildOnce(shuffle(allItems)); if(!best || sc.length<best.length) best=sc; }
+  for(let r=0;r<60;r++){ const sc=buildOnce(shuffle(allItems)); if(!best || sc.length<best.length) best=sc; }
   state.schedule=best;
 }
 
@@ -562,6 +603,8 @@ function renderConfig(){
     grid.appendChild(inp);
   });
   document.getElementById('ppw').value=state.pointsPerWin;
+  document.getElementById('mpe').value=state.matchsParEquipe;
+  document.getElementById('mpeHint').innerHTML=mpeHintText(state.matchsParEquipe);
 
   const ed=document.getElementById('gamesEditor'); ed.innerHTML='';
   state.games.forEach((g,gi)=>{
@@ -579,7 +622,23 @@ function renderConfig(){
   });
 }
 
+function totalMatchesEstimate(k){
+  let total=0;
+  state.games.forEach(g=>{ const N=Math.floor(state.players.length/(g.size||2)); if(N<2) return; const maxR=N-1, use=(k>0&&k<maxR)?k:maxR; total+=N*use/2; });
+  return total;
+}
+function mpeHintText(k){
+  return '≈ <b>'+totalMatchesEstimate(k)+' matchs</b> au total avec '+k+' match(s)/équipe. « Appliquer » raccourcit (ou rétablit) les ligues <b>sans re-tirer les équipes ni perdre les résultats déjà saisis</b> (foot inclus). Rappel : ~2 sports 2v2 tournent en parallèle (limite des 12 joueurs).';
+}
+
 /* ===================== Réglages : événements ===================== */
+document.getElementById('mpe').addEventListener('input',e=>{
+  const v=Math.max(1,parseInt(e.target.value||'1',10));
+  document.getElementById('mpeHint').innerHTML=mpeHintText(v);
+});
+document.getElementById('mpeApply').onclick=()=>{
+  setMatchsParEquipe(Math.max(1,parseInt(document.getElementById('mpe').value||'1',10)));
+};
 document.getElementById('ppw').addEventListener('input',e=>{ state.pointsPerWin=Math.max(1,parseInt(e.target.value||'1',10)); save(); renderProgram(); renderRanking(); });
 document.getElementById('genAll2').onclick=doGenerate;
 document.getElementById('addGame').onclick=()=>{ state.games.push({name:'Nouveau sport', size:2, rules:'', teams:null, matches:null}); state.schedule=null; save(); renderConfig(); renderProgram(); };

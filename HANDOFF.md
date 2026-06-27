@@ -76,8 +76,21 @@ Si l'ancienne version persiste : attendre ~1 min (cache CDN) puis hard refresh.
 
 ---
 
+## 📴 Mode hors-ligne (PWA)
+L'app est une **PWA** : après une **première ouverture avec réseau** (qui installe le
+service worker `sw.js`), elle fonctionne **100% hors-ligne** et persiste.
+- Fichiers PWA : `sw.js` (cache), `manifest.webmanifest`, `icon.svg`.
+- Stratégie *stale-while-revalidate* : l'app se charge **toujours depuis le cache**
+  (instantané, sans réseau) ; quand il y a du réseau, le cache se met à jour en arrière-plan.
+- **Conséquence sur les mises à jour :** après un `git push`, la nouvelle version est prise
+  **au lancement suivant** (le 1er sert l'ancienne + télécharge la nouvelle en fond).
+  Pour forcer une mise à jour "dure", **bumper `CACHE = 'olympiades-vN'`** dans `sw.js`.
+- ⚠️ Ceux qui avaient ajouté l'app à l'écran d'accueil **avant** la PWA doivent la rouvrir
+  **une fois avec réseau** pour installer le cache.
+
 ## 🧱 Architecture technique
-- **1 fichier** `index.html` (~32 Ko), HTML + CSS + JS *vanilla*, aucune dépendance, aucun build.
+- **Fichiers :** `index.html` (~33 Ko, l'app) + `sw.js` + `manifest.webmanifest` + `icon.svg`
+  (PWA). HTML + CSS + JS *vanilla*, aucune dépendance, aucun build.
 - **État** : un objet JS sauvegardé en `localStorage['olympiades_v4']`
   `{ players[12], pointsPerWin, terrains, games[{name,size,rules,teams,matches}], schedule }`.
 - **Fonctions clés** : `makeTeams` (tirage équipes + variété des binômes),
@@ -95,12 +108,12 @@ Si l'ancienne version persiste : attendre ~1 min (cache CDN) puis hard refresh.
 | Ancienne version après une mise à jour | Cache CDN/navigateur : attendre ~1 min, recharger (hard refresh). |
 | Tout a disparu | localStorage effacé. Restaurer via **Importer** si un export JSON existe ; sinon régénérer. |
 | Scores pas synchronisés entre 2 tél | Normal (pas de serveur). Un seul appareil maître + Export/Import. |
-| Hors-ligne ne marche pas après vidage cache | Pas de service worker. Ouvrir une fois **avec réseau**. (Voir TODO PWA.) |
+| Hors-ligne ne marche pas | PWA : ouvrir l'app **une fois avec réseau** pour installer le cache. Ensuite OK sans réseau. |
+| Mise à jour pas visible après un push | Normal (cache-first) : relancer l'app (2e ouverture). Pour forcer, bumper `CACHE` dans `sw.js`. |
 
 ---
 
 ## 💡 Pistes non implémentées (si besoin un jour)
-- **PWA hors-ligne garanti** (service worker + manifest) pour ne dépendre d'aucun réseau sur place.
 - **Synchro multi-appareils en direct** (nécessiterait un petit backend — ex. Firebase).
 - **Page imprimable** (règles + programme) en secours papier.
 - **Match nul** (volley/pétanque peuvent finir à égalité).

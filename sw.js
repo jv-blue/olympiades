@@ -2,7 +2,7 @@
    Stratégie "stale-while-revalidate" : on sert toujours depuis le cache (instantané,
    100% hors-ligne) et on met à jour le cache en arrière-plan quand il y a du réseau.
    => l'app marche sans réseau ; une mise à jour poussée est prise au prochain lancement. */
-const CACHE = 'olympiades-v2';
+const CACHE = 'olympiades-v3';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', e => {
@@ -28,14 +28,32 @@ self.addEventListener('fetch', e => {
   try { url = new URL(req.url); } catch (_) { return; }
   if (url.origin !== self.location.origin) return;   // on ne gère que notre propre origine
 
+  // La PAGE : réseau d'abord (toujours à jour en ligne), repli cache si hors-ligne/lent (3,5 s max)
+  if (req.mode === 'navigate') {
+    e.respondWith((async () => {
+      const cache = await caches.open(CACHE);
+      try {
+        const net = await Promise.race([
+          fetch(req, { cache: 'no-store' }),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3500))
+        ]);
+        if (net && net.status === 200) cache.put('./index.html', net.clone());
+        return net;
+      } catch (_) {
+        return (await cache.match(req)) || (await cache.match('./index.html'));
+      }
+    })());
+    return;
+  }
+
+  // Autres ressources : cache d'abord (instantané + hors-ligne), mise à jour en arrière-plan
   e.respondWith(
     caches.open(CACHE).then(async cache => {
       const cached = await cache.match(req);
       const network = fetch(req)
         .then(res => { if (res && res.status === 200) cache.put(req, res.clone()); return res; })
         .catch(() => null);
-      // cache d'abord (instantané + hors-ligne), sinon réseau, sinon repli sur la page
-      return cached || (await network) || (req.mode === 'navigate' ? cache.match('./index.html') : Response.error());
+      return cached || (await network) || Response.error();
     })
   );
 });

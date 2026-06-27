@@ -2,7 +2,7 @@
    Stratégie "stale-while-revalidate" : on sert toujours depuis le cache (instantané,
    100% hors-ligne) et on met à jour le cache en arrière-plan quand il y a du réseau.
    => l'app marche sans réseau ; une mise à jour poussée est prise au prochain lancement. */
-const CACHE = 'olympiades-v1';
+const CACHE = 'olympiades-v2';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', e => {

@@ -170,6 +170,7 @@ function defaultState(){
 }
 let state = load();
 const uiCollapsed = {};
+const uiTeamEdit = {};   // gi -> édition manuelle des équipes ouverte ?
 
 function load(){
   try{
@@ -258,6 +259,22 @@ function regenGame(gi){
 function setWinner(gi,mid,res){
   const m=state.games[gi].matches[mid];
   m.winner = (m.winner===res)?null:res;
+  save(); renderProgram(); renderRanking();
+}
+// Édition manuelle : déplace un joueur vers l'équipe ti (le retire de son équipe actuelle)
+function movePlayerToTeam(gi,p,ti){
+  const g=state.games[gi];
+  g.teams.forEach(t=>{ const k=t.indexOf(p); if(k>=0) t.splice(k,1); });
+  g.teams[ti].push(p);
+  if(isParallel(g)) build2v2Schedule();
+  save(); renderProgram(); renderRanking();
+}
+// Copie les compositions d'équipes d'un autre sport de même format
+function copyTeams(srcGi,dstGi){
+  const src=state.games[srcGi], dst=state.games[dstGi];
+  if(!src.teams || src.teams.length!==dst.teams.length || src.size!==dst.size){ alert("Format différent : copie impossible."); return; }
+  dst.teams = src.teams.map(t=>t.slice());
+  if(isParallel(dst)) build2v2Schedule();
   save(); renderProgram(); renderRanking();
 }
 function moveGame(gi,dir){
@@ -433,6 +450,13 @@ function renderLeague(gi){
         <td>${teamNames(g.teams[r.ti])}</td><td class="num">${r.played}</td><td class="num total-pts">${r.wins}</td></tr>`).join('')}</tbody></table>`;
     card.appendChild(tbl);
 
+    // édition manuelle des équipes
+    const teditBtn=document.createElement('button'); teditBtn.className='btn ghost sm'; teditBtn.style.marginTop='10px';
+    teditBtn.textContent = uiTeamEdit[gi] ? '✅ Terminer la modif des équipes' : '✏️ Modifier les équipes (à la main)';
+    teditBtn.onclick=()=>{ uiTeamEdit[gi]=!uiTeamEdit[gi]; renderProgram(); };
+    card.appendChild(teditBtn);
+    if(uiTeamEdit[gi]) card.appendChild(renderTeamEditor(gi));
+
     // matchs (saisie) — pour 2v2 c'est surtout via le panneau ⚡, mais éditable ici aussi
     if(isParallel(g)){
       const note=document.createElement('div'); note.className='hint'; note.textContent='Les matchs de ce sport se jouent via le panneau ⚡ en haut (saisie possible ici aussi).';
@@ -452,6 +476,39 @@ function renderLeague(gi){
     card.appendChild(re);
   }
   return card;
+}
+
+function renderTeamEditor(gi){
+  const g=state.games[gi], N=g.teams.length;
+  const box=document.createElement('div');
+  box.style.cssText='background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:10px;margin-top:8px';
+  const sizes=g.teams.map(t=>t.length);
+  const ok=sizes.every(s=>s===g.size);
+  box.innerHTML=`<div class="bm-label" style="margin-bottom:8px"><span>Composition des équipes</span><span style="color:${ok?'var(--muted)':'var(--danger)'}">${sizes.map((s,i)=>'É'+(i+1)+' : '+s+'/'+g.size).join(' · ')}</span></div>`;
+
+  // copier depuis un autre sport de même format
+  const others=state.games.map((gg,j)=>({gg,j})).filter(o=>o.j!==gi && o.gg.teams && o.gg.teams.length===N && o.gg.size===g.size);
+  if(others.length){
+    const sel=document.createElement('select'); sel.style.marginBottom='10px';
+    sel.innerHTML='<option value="">📋 Copier les équipes depuis…</option>'+others.map(o=>`<option value="${o.j}">${escapeHtml(o.gg.name)}</option>`).join('');
+    sel.onchange=()=>{ const j=parseInt(sel.value,10); if(!isNaN(j)) copyTeams(j,gi); };
+    box.appendChild(sel);
+  }
+
+  // un sélecteur d'équipe par joueur
+  state.players.forEach((name,p)=>{
+    const cur=g.teams.findIndex(t=>t.includes(p));
+    const row=document.createElement('div'); row.className='row'; row.style.cssText='justify-content:space-between;margin-top:6px';
+    const lab=document.createElement('span'); lab.style.cssText='flex:1;font-size:14px'; lab.textContent=name;
+    const sel=document.createElement('select'); sel.className='size-sel';
+    sel.innerHTML=g.teams.map((_,ti)=>`<option value="${ti}" ${ti===cur?'selected':''}>Équipe ${ti+1}</option>`).join('');
+    sel.onchange=()=>movePlayerToTeam(gi,p,parseInt(sel.value,10));
+    row.appendChild(lab); row.appendChild(sel); box.appendChild(row);
+  });
+  const hint=document.createElement('div'); hint.className='hint';
+  hint.textContent='Assigne chaque joueur à une équipe ('+g.size+' par équipe). Pense à garder les équipes équilibrées.';
+  box.appendChild(hint);
+  return box;
 }
 
 /* ===================== Rendu : Classement ===================== */
